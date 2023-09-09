@@ -2,6 +2,7 @@ using LanchesMac.Context;
 using LanchesMac.Repositories.Interfaces;
 using LanchesMac.Repositories;
 using Microsoft.EntityFrameworkCore;
+using LanchesMac.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +14,14 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(conn
 
 builder.Services.AddTransient<ILancheRepository, LancheRepository>();
 builder.Services.AddTransient<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddScoped(sp => CarrinhoCompra.GetCarrinho(sp));
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
+
+builder.Services.AddMemoryCache();
+builder.Services.AddSession();
+
 
 var app = builder.Build();
 
@@ -30,6 +37,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 
