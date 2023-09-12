@@ -14,7 +14,6 @@ namespace LanchesMac.Models
 
         public string CarrinhoCompraId { get; set; }
         public List<CarrinhoCompraItem> CarrinhoCompraItems { get; set; }
-
         public static CarrinhoCompra GetCarrinho(IServiceProvider services)
         {
             ISession session =
@@ -22,7 +21,7 @@ namespace LanchesMac.Models
 
             var context = services.GetService<AppDbContext>();
 
-            string carrinhoId = session.GetString("CarrinhoId") ?? Guid.NewGuid().ToString();  
+            string carrinhoId = session.GetString("CarrinhoId") ?? Guid.NewGuid().ToString();
 
             session.SetString("CarrinhoId", carrinhoId);
 
@@ -32,11 +31,11 @@ namespace LanchesMac.Models
             };
         }
 
-        public async Task AdicionarAoCarrinho(Lanche lanche)
+        public void AdicionarAoCarrinho(Lanche lanche)
         {
-            var carrinhoCompraItem = await _context.CarrinhoCompraItens.FirstOrDefaultAsync(
-                s => s.Lanche.LancheId == lanche.LancheId &&
-                s.CarrinhoCompraId == CarrinhoCompraId);
+            var carrinhoCompraItem = _context.CarrinhoCompraItens.SingleOrDefault(
+                     s => s.Lanche.LancheId == lanche.LancheId &&
+                     s.CarrinhoCompraId == CarrinhoCompraId);
 
             if (carrinhoCompraItem == null)
             {
@@ -52,12 +51,12 @@ namespace LanchesMac.Models
             {
                 carrinhoCompraItem.Quantidade++;
             }
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();
         }
 
-        public async Task<int> RemoverDoCarrinho(Lanche lanche)
+        public int RemoverDoCarrinho(Lanche lanche)
         {
-            var carrinhoCompraItem = await _context.CarrinhoCompraItens.FirstOrDefaultAsync(
+            var carrinhoCompraItem = _context.CarrinhoCompraItens.SingleOrDefault(
                    s => s.Lanche.LancheId == lanche.LancheId &&
                    s.CarrinhoCompraId == CarrinhoCompraId);
 
@@ -75,23 +74,23 @@ namespace LanchesMac.Models
                     _context.CarrinhoCompraItens.Remove(carrinhoCompraItem);
                 }
             }
-            await _context.SaveChangesAsync();
+            _context.SaveChanges();
             return quantidadeLocal;
         }
 
         public List<CarrinhoCompraItem> GetCarrinhoCompraItens()
         {
-            return CarrinhoCompraItems ?? _context.CarrinhoCompraItens
-                                          .Where(w => w.CarrinhoCompraId == CarrinhoCompraId)
-                                          .Include(i => i.Lanche)
-                                          .OrderBy(o => o.CarrinhoCompraId)
-                                          .ToList();
+            return CarrinhoCompraItems ??
+                   (CarrinhoCompraItems =
+                       _context.CarrinhoCompraItens.Where(c => c.CarrinhoCompraId == CarrinhoCompraId)
+                           .Include(s => s.Lanche)
+                           .ToList());
         }
 
         public void LimparCarrinho()
         {
             var carrinhoItens = _context.CarrinhoCompraItens
-                .Where(carrinho => carrinho.CarrinhoCompraId == CarrinhoCompraId);
+                                 .Where(carrinho => carrinho.CarrinhoCompraId == CarrinhoCompraId);
 
             _context.CarrinhoCompraItens.RemoveRange(carrinhoItens);
             _context.SaveChanges();
@@ -99,8 +98,9 @@ namespace LanchesMac.Models
 
         public decimal GetCarrinhoCompraTotal()
         {
-            return _context.CarrinhoCompraItens.Where(c => c.CarrinhoCompraId == CarrinhoCompraId)
+            var total = _context.CarrinhoCompraItens.Where(c => c.CarrinhoCompraId == CarrinhoCompraId)
                 .Select(c => c.Lanche.Preco * c.Quantidade).Sum();
+            return total;
         }
     }
 }
