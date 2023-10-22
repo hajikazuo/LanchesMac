@@ -6,6 +6,7 @@ using LanchesMac.Models;
 using Microsoft.AspNetCore.Identity;
 using LanchesMac.Services;
 using ReflectionIT.Mvc.Paging;
+using LanchesMac.Areas.Admin.Servicos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,7 @@ builder.Services.AddTransient<IPedidoRepository, PedidoRepository>();
 builder.Services.AddScoped<ISeedUserRoleInitial, SeedUserRoleInitial>();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped(sp => CarrinhoCompra.GetCarrinho(sp));
+builder.Services.AddScoped<RelatorioVendasService>();
 
 builder.Services.AddAuthorization(options =>
 {
